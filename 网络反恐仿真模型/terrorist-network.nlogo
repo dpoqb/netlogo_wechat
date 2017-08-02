@@ -1,31 +1,141 @@
 breed[people person]
-breed[terrorist terrorists]
 turtles-own[
   group
+  fear-index
 ]
+globals [
+  last-patch-residual
+  mouse-was-down?   ;;tracks the previous state of the mouse
+  terror-event?     ;;tracks whether a terror event has occurred recently, true after a terror event until community intervention occur
+]
+patches-own [residual-fear] ;;residual fear from after terror events
 
 to setup
   clear-all
-  ask patches [set pcolor white]
-  set-default-shape terrorist "person"
-  create-terrorist terrorist-population [
-    set size 1.5
-    setxy random-xcor random-ycor
-    set group who mod groups
-    set color red
-  ]
-  set-default-shape people "person"
+  set-default-shape people "circle"
   create-people people-population[
-    set size 1.5
+    set size 0.7
     setxy random-xcor random-ycor
-    set color green
+    set fear-index random 100 + 1
+    update-color
   ]
-  ask terrorist [
-    if terr-network?
-    [ let network n-of links-with-others other terrorist with [group = [group] of myself]
+  ask people [
+    if people-network?
+    [ let network n-of links-with-others other people with [group = [group] of myself]
       create-links-with network]
   ]
+   ask patches [
+    set residual-fear 0
+    if show-residual-fear? = true
+    [set plabel residual-fear]
+  ]
+
+  set mouse-was-down? false
+  set terror-event? false
   reset-ticks
+end
+
+
+to go
+  terror-event
+  ask people[
+    let other-person-here one-of other people-here
+    if other-person-here != nobody
+    [ adjust-fear-index other-person-here ]
+    if people-network? = true and ticks mod network-communication-frequency = 0 ;adjust fear-index based on every link neighboor
+    [ foreach [self] of link-neighbors [ adjust-fear-index ? ] ]
+    residual-fear-effect
+    update-color
+    move
+    set last-patch-residual [residual-fear] of patch-here
+    ]
+  ask patches [
+    ifelse show-residual-fear? = true
+    [ set plabel residual-fear ]
+    [ set plabel "" ]
+       if residual-fear > 0
+    [ set residual-fear (residual-fear - residual-decay-rate) ]
+  ]
+end
+
+to terror-event
+  if mouse-was-down? and not mouse-down?
+  [
+    ask patch round mouse-xcor round mouse-ycor [
+      ask people in-radius terror-range [
+       let boundary fear-index + terror-severity < 100
+       ifelse boundary
+       [ set fear-index (fear-index + terror-severity) ]
+       [ set fear-index 100 ]
+       set last-patch-residual fear-index
+      ]
+      ask patches in-radius terror-range
+      [ set residual-fear round (terror-severity * initial-residual-fear / 100) ]
+    ]
+    set terror-event? true
+  ]
+  set mouse-was-down? mouse-down?
+end
+
+to adjust-fear-index [other-turtle]
+  if other-turtle != nobody
+  [
+    let difference round ([fear-index] of other-turtle - fear-index) / 20
+    let fear-change round (fear-index + difference)
+    ifelse terror-event? = false
+    [
+      ifelse fear-change < 0
+      [ set fear-index 0 ]
+      [
+        ifelse fear-change > 100
+        [ set fear-index 100 ]
+        [ set fear-index fear-change ]
+      ]
+    ]
+    [
+      if difference > 0
+      [
+        ifelse fear-change > 100
+          [ set fear-index 100 ]
+          [ set fear-index fear-change ]
+      ]
+    ]
+  ]
+end
+
+;residual-fear-effect, a turtle procedure
+;Increases the FEAR-INDEX by the current RESIDUAL-FEAR of the patch the turtle is on
+to residual-fear-effect
+  if [residual-fear] of patch-here != 0 and last-patch-residual = 0
+  [
+    let pdifference fear-index + [residual-fear] of patch-here
+    ifelse pdifference > 100
+    [ set fear-index 100 ]
+    [ set fear-index pdifference ]
+  ]
+end
+
+;move, a turtle procedure
+;If there is a person ahead and a random number is less than the fear-index,
+;then go towards them, otherwise turn randomly and then advance forward.
+to move
+  let person-ahead one-of people in-cone 2 120 ;;
+  ifelse person-ahead != nobody and (random 100 + 1) < fear-index
+  [ face person-ahead ]
+  [ rt random 121 - 60 ]
+  fd 1
+end
+
+
+;;Reflect the extent of people's fears by color
+to update-color
+  ifelse fear-index = 50
+  [ set color white ]
+  [
+    ifelse fear-index > 50
+    [ set color 18 - ((fear-index - 50) / 10) ]
+    [ set color 108 - ((50 - fear-index) / 10) ]
+  ]
 end
 @#$#@#$#@
 GRAPHICS-WINDOW
@@ -56,10 +166,10 @@ ticks
 30.0
 
 BUTTON
-24
-230
-90
-263
+22
+149
+88
+182
 NIL
 setup
 NIL
@@ -73,25 +183,10 @@ NIL
 1
 
 SLIDER
-24
-26
-212
-59
-terrorist-population
-terrorist-population
-0
-100
+23
 64
-1
-1
-NIL
-HORIZONTAL
-
-SLIDER
-24
-175
-210
-208
+209
+97
 groups
 groups
 0
@@ -105,10 +200,10 @@ HORIZONTAL
 SWITCH
 212
 65
-360
+359
 98
-terr-network?
-terr-network?
+people-network?
+people-network?
 0
 1
 -1000
@@ -122,7 +217,73 @@ links-with-others
 links-with-others
 0
 10
-6
+1
+1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+24
+26
+208
+59
+people-population
+people-population
+0
+200
+200
+1
+1
+NIL
+HORIZONTAL
+
+TEXTBOX
+148
+10
+298
+42
+network variables
+12
+0.0
+1
+
+SWITCH
+26
+247
+198
+280
+show-residual-fear?
+show-residual-fear?
+0
+1
+-1000
+
+SLIDER
+26
+288
+198
+321
+terror-range
+terror-range
+0
+10
+5
+1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+200
+288
+359
+321
+terror-severity
+terror-severity
+0
+100
+50
 1
 1
 NIL
@@ -130,38 +291,65 @@ HORIZONTAL
 
 SLIDER
 25
-122
-209
-155
-people-population
-people-population
+328
+199
+361
+initial-residual-fear
+initial-residual-fear
 0
 100
 100
 1
 1
-NIL
+%
 HORIZONTAL
 
-TEXTBOX
-122
-9
-272
-27
-terrorist network
-12
-0.0
+SLIDER
+23
+100
+282
+133
+network-communication-frequency
+network-communication-frequency
+0
+100
+50
+1
+1
+ticks
+HORIZONTAL
+
+BUTTON
+89
+149
+152
+182
+NIL
+go
+T
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
 1
 
-TEXTBOX
-119
+SLIDER
+25
+368
+204
+401
+residual-decay-rate
+residual-decay-rate
+0
 100
-269
-132
-people variables
-12
-0.0
 1
+1
+1
+/tick
+HORIZONTAL
 
 @#$#@#$#@
 ## WHAT IS IT?
