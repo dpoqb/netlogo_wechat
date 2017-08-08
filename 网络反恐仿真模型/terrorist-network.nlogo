@@ -14,7 +14,7 @@ to setup
   clear-all
   set-default-shape people "circle"
   create-people people-population[
-    set size 0.7
+    set size 1
     setxy random-xcor random-ycor
     set fear-index random 100 + 1
     update-color
@@ -23,13 +23,14 @@ to setup
     if people-network?
     [ let network n-of links-with-others other people with [group = [group] of myself]
       create-links-with network]
+        display-labels
+
   ]
    ask patches [
     set residual-fear 0
     if show-residual-fear? = true
     [set plabel residual-fear]
   ]
-
   set mouse-was-down? false
   set terror-event? false
   reset-ticks
@@ -38,7 +39,7 @@ end
 
 to go
   terror-event
-  ask people[
+  ask people [
     let other-person-here one-of other people-here
     if other-person-here != nobody
     [ adjust-fear-index other-person-here ]
@@ -48,6 +49,7 @@ to go
     update-color
     move
     set last-patch-residual [residual-fear] of patch-here
+
     ]
   ask patches [
     ifelse show-residual-fear? = true
@@ -56,6 +58,7 @@ to go
        if residual-fear > 0
     [ set residual-fear (residual-fear - residual-decay-rate) ]
   ]
+
 end
 
 to terror-event
@@ -135,6 +138,15 @@ to update-color
     ifelse fear-index > 50
     [ set color 18 - ((fear-index - 50) / 10) ]
     [ set color 108 - ((50 - fear-index) / 10) ]
+  ]
+  display-labels
+end
+
+to display-labels
+  ask people[
+  if show-fear-index? = true[
+    set label fear-index
+  ]
   ]
 end
 @#$#@#$#@
@@ -268,7 +280,7 @@ terror-range
 terror-range
 0
 10
-5
+10
 1
 1
 NIL
@@ -283,7 +295,7 @@ terror-severity
 terror-severity
 0
 100
-50
+100
 1
 1
 NIL
@@ -339,7 +351,7 @@ NIL
 SLIDER
 25
 368
-204
+203
 401
 residual-decay-rate
 residual-decay-rate
@@ -350,6 +362,17 @@ residual-decay-rate
 1
 /tick
 HORIZONTAL
+
+SWITCH
+159
+148
+328
+181
+show-fear-index?
+show-fear-index?
+0
+1
+-1000
 
 @#$#@#$#@
 ## WHAT IS IT?
