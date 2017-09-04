@@ -2,6 +2,7 @@ breed[people person]
 turtles-own[
   group
   fear-index
+  risk-perception-bias
 ]
 globals [
   last-patch-residual
@@ -17,6 +18,7 @@ to setup
     set size 1
     setxy random-xcor random-ycor
     set fear-index random 100 + 1
+    set risk-perception-bias random 200 + 1
     update-color
   ]
   ask people [
@@ -58,7 +60,7 @@ to go
        if residual-fear > 0
     [ set residual-fear (residual-fear - residual-decay-rate) ]
   ]
-
+  tick
 end
 
 to terror-event
@@ -83,7 +85,7 @@ end
 to adjust-fear-index [other-turtle]
   if other-turtle != nobody
   [
-    let difference round ([fear-index] of other-turtle - fear-index) / 20
+    let difference round (([fear-index] of other-turtle - fear-index) * risk-perception-bias / 100) / 20
     let fear-change round (fear-index + difference)
     ifelse terror-event? = false
     [
@@ -151,12 +153,12 @@ to display-labels
 end
 @#$#@#$#@
 GRAPHICS-WINDOW
-368
-14
-911
-578
-20
-20
+364
+25
+803
+485
+16
+16
 13.0
 1
 10
@@ -167,10 +169,10 @@ GRAPHICS-WINDOW
 1
 1
 1
--20
-20
--20
-20
+-16
+16
+-16
+16
 0
 0
 1
@@ -203,7 +205,7 @@ groups
 groups
 0
 10
-9
+10
 1
 1
 NIL
@@ -229,7 +231,7 @@ links-with-others
 links-with-others
 0
 10
-1
+4
 1
 1
 NIL
@@ -243,8 +245,8 @@ SLIDER
 people-population
 people-population
 0
-200
-200
+100
+100
 1
 1
 NIL
@@ -261,10 +263,10 @@ network variables
 1
 
 SWITCH
-26
-247
+27
+307
 198
-280
+340
 show-residual-fear?
 show-residual-fear?
 0
@@ -272,40 +274,40 @@ show-residual-fear?
 -1000
 
 SLIDER
-26
-288
-198
-321
-terror-range
-terror-range
-0
-10
-10
-1
-1
-NIL
-HORIZONTAL
-
-SLIDER
-200
-288
-359
-321
-terror-severity
-terror-severity
-0
-100
-100
-1
-1
-NIL
-HORIZONTAL
-
-SLIDER
-25
-328
+27
+348
 199
-361
+381
+terror-range
+terror-range
+0
+10
+8
+1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+201
+348
+360
+381
+terror-severity
+terror-severity
+0
+100
+84
+1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+26
+388
+200
+421
 initial-residual-fear
 initial-residual-fear
 0
@@ -325,7 +327,7 @@ network-communication-frequency
 network-communication-frequency
 0
 100
-50
+51
 1
 1
 ticks
@@ -349,10 +351,10 @@ NIL
 1
 
 SLIDER
-25
-368
-203
-401
+26
+428
+212
+461
 residual-decay-rate
 residual-decay-rate
 0
@@ -364,15 +366,76 @@ residual-decay-rate
 HORIZONTAL
 
 SWITCH
-159
-148
-328
-181
+215
+222
+360
+255
 show-fear-index?
 show-fear-index?
 0
 1
 -1000
+
+TEXTBOX
+148
+200
+298
+218
+people variable
+12
+0.0
+1
+
+PLOT
+806
+26
+1269
+263
+fear-index of people
+people
+fear-index
+0.0
+100.0
+0.0
+100.0
+true
+true
+"set-plot-x-range 0 people-population\nset-plot-y-range 0 100\nset-histogram-num-bars people-population" "clear-plot\nlet the-data [(list who fear-index)] of turtles\nset-plot-pen-mode 1\nforeach the-data[\nplotxy first ? last ?\n]"
+PENS
+"default" 1.0 2 -16777216 false "" ""
+
+PLOT
+808
+267
+1269
+484
+risk-perception-bias of people
+people
+risk-perception-bias(%)
+0.0
+100.0
+1.0
+200.0
+true
+false
+"set-plot-x-range 0 people-population\nset-plot-y-range 1 200\nset-histogram-num-bars people-population" "clear-plot\nlet the-data [(list who risk-perception-bias)] of turtles\nset-plot-pen-mode 1\nforeach the-data[\nplotxy first ? last ?\n]"
+PENS
+"default" 1.0 1 -16777216 true "" ""
+
+SLIDER
+29
+222
+201
+255
+public-effect
+public-effect
+0
+1
+1
+0.1
+1
+NIL
+HORIZONTAL
 
 @#$#@#$#@
 ## WHAT IS IT?
