@@ -1,15 +1,29 @@
 breed[people person]
+;;risk-perception-bias-->RP (T): risk cognitive bias changes with time t, RP (T) belongs to [0,1],
+;;[0,0.33] belongs to risk perception low
+;;(0.33,0.67] belongs to non cognitive bias
+;;(0.67,1] is risk perception high.
 turtles-own[
   group
   fear-index
   risk-perception-bias
+  person-information-authenticity
+  person-public-influence
+  temp-rpb   ;;
 ]
+
+;;The credibility of the government belongs to the [0,1], and the greater the value of cr_g (T), the greater the influence of the government.
 globals [
   last-patch-residual
   mouse-was-down?   ;;tracks the previous state of the mouse
   terror-event?     ;;tracks whether a terror event has occurred recently, true after a terror event until community intervention occur
 ]
-patches-own [residual-fear] ;;residual fear from after terror events
+
+;;the patches can represent media ,the label of patches can describe terror event
+patches-own [
+  residual-fear               ;;residual fear from after terror events
+  media-fear-index
+  ]
 
 to setup
   clear-all
@@ -18,7 +32,10 @@ to setup
     set size 1
     setxy random-xcor random-ycor
     set fear-index random 100 + 1
-    set risk-perception-bias random 200 + 1
+    set risk-perception-bias precision (random-float 1.0) 2
+    set person-information-authenticity precision (random-float 1.0) 2
+    set person-public-influence precision (random-float 1.0) 2
+    set group who mod groups
     update-color
   ]
   ask people [
@@ -26,7 +43,6 @@ to setup
     [ let network n-of links-with-others other people with [group = [group] of myself]
       create-links-with network]
         display-labels
-
   ]
    ask patches [
     set residual-fear 0
@@ -42,16 +58,25 @@ end
 to go
   terror-event
   ask people [
+    ;;attention to risk-perception-bias
+    if risk-perception-bias >= 0 and risk-perception-bias < 0.33 [
+      set temp-rpb risk-perception-bias * 3
+      ]
+    if risk-perception-bias >= 0.33 and risk-perception-bias < 0.67 [
+      set temp-rpb 1
+      ]
+    if risk-perception-bias >= 0.67 and risk-perception-bias <= 1 [
+      set temp-rpb risk-perception-bias * 2
+      ]
     let other-person-here one-of other people-here
     if other-person-here != nobody
-    [ adjust-fear-index other-person-here ]
+    [ adjust-fear-index-between-people other-person-here ]
     if people-network? = true and ticks mod network-communication-frequency = 0 ;adjust fear-index based on every link neighboor
-    [ foreach [self] of link-neighbors [ adjust-fear-index ? ] ]
+    [ foreach [self] of link-neighbors [ adjust-fear-index-between-people ? ] ]
     residual-fear-effect
     update-color
     move
     set last-patch-residual [residual-fear] of patch-here
-
     ]
   ask patches [
     ifelse show-residual-fear? = true
@@ -60,6 +85,26 @@ to go
        if residual-fear > 0
     [ set residual-fear (residual-fear - residual-decay-rate) ]
   ]
+  if terror-event?[
+        if media?[
+    ;; a TV will appear once every MEDIA-FREQUENCY ticks
+    if ticks mod (media-frequency / 2) = 0 [
+      ask one-of patches with [count turtles-here > 0] [
+        media-trend
+      ]
+    ]
+    ;; reset TV patches to black
+    if ticks mod media-frequency = 0 [
+      ask patches with [pcolor = white][
+        set pcolor black
+      ]
+    ]
+  ]
+        ask patches [
+          set media-fear-index (media-information-authenticity * terror-severity) +
+          ((-1)^(random 2) * (precision (random-float 4.0) 2))
+          ]
+    ]
   tick
 end
 
@@ -82,11 +127,26 @@ to terror-event
   set mouse-was-down? mouse-down?
 end
 
-to adjust-fear-index [other-turtle]
+to adjust-fear-index-between-people [other-turtle]
   if other-turtle != nobody
   [
-    let difference round (([fear-index] of other-turtle - fear-index) * risk-perception-bias / 100) / 20
-    let fear-change round (fear-index + difference)
+    ;;fear-index of people interactive
+    let difference-between-people round (([fear-index] of other-turtle - fear-index) * [temp-rpb] of other-turtle *
+      [person-information-authenticity] of other-turtle * [person-public-influence] of other-turtle) * 10
+    let fear-change round (fear-index + difference-between-people)
+
+    ;;risk-perception-bias of people interactive
+    let difference-risk-perception-bias (([temp-rpb] of other-turtle - temp-rpb) *
+    [temp-rpb] of other-turtle * [person-information-authenticity] of other-turtle *
+    [person-public-influence] of other-turtle)
+    let rpb-change (risk-perception-bias + difference-risk-perception-bias)
+
+    ;;person-information-authenticity interactive
+    let difference-person-information-authenticity (([person-information-authenticity] of other-turtle -
+      person-information-authenticity) * [temp-rpb] of other-turtle *
+      [person-information-authenticity] of other-turtle * [person-public-influence] of other-turtle) * 10
+    let pia-change (person-information-authenticity + difference-person-information-authenticity)
+
     ifelse terror-event? = false
     [
       ifelse fear-change < 0
@@ -96,9 +156,23 @@ to adjust-fear-index [other-turtle]
         [ set fear-index 100 ]
         [ set fear-index fear-change ]
       ]
+      ifelse rpb-change < 0
+      [set risk-perception-bias 0]
+      [
+        ifelse rpb-change > 1
+        [set risk-perception-bias 1]
+        [set risk-perception-bias rpb-change]
+        ]
+      ifelse pia-change < 0
+      [ set person-information-authenticity 0 ]
+      [
+        ifelse pia-change > 0
+        [ set person-information-authenticity 1]
+        [ set person-information-authenticity pia-change ]
+        ]
     ]
     [
-      if difference > 0
+      if difference-between-people > 0
       [
         ifelse fear-change > 100
           [ set fear-index 100 ]
@@ -107,6 +181,14 @@ to adjust-fear-index [other-turtle]
     ]
   ]
 end
+
+to adjust-fear-index-between-media-people [other-turtle]
+  if other-turtle != nobody
+  [
+    let difference-between-media-people round ([fear-index] of other-turtle - media-fear-index) * media-information-authenticity
+    ]
+end
+
 
 ;residual-fear-effect, a turtle procedure
 ;Increases the FEAR-INDEX by the current RESIDUAL-FEAR of the patch the turtle is on
@@ -124,7 +206,7 @@ end
 ;If there is a person ahead and a random number is less than the fear-index,
 ;then go towards them, otherwise turn randomly and then advance forward.
 to move
-  let person-ahead one-of people in-cone 2 120 ;;
+  let person-ahead one-of people in-cone 2 120
   ifelse person-ahead != nobody and (random 100 + 1) < fear-index
   [ face person-ahead ]
   [ rt random 121 - 60 ]
@@ -151,15 +233,30 @@ to display-labels
   ]
   ]
 end
+
+;; when media? is true, patches run this procedure, representing TV-watching.
+;; assume that a turtle will accept a trend regardless of category with media exposure
+to media-trend
+  set pcolor white ;; the turtle watches TV
+  ;; the TV broadcasts the current trend
+  ;;set category [trend-category] of one-of turtles with [trend-setter? = true]
+  ;; the media will try to influence one of the turtles on the TV patch
+  let watcher one-of turtles-here
+  if watcher != nobody [
+    ask watcher[
+      adjust-fear-index-between-media-people watcher
+    ]
+  ]
+end
 @#$#@#$#@
 GRAPHICS-WINDOW
-364
+361
 25
-803
-485
-16
-16
-13.0
+842
+527
+20
+20
+11.5
 1
 10
 1
@@ -169,10 +266,10 @@ GRAPHICS-WINDOW
 1
 1
 1
--16
-16
--16
-16
+-20
+20
+-20
+20
 0
 0
 1
@@ -205,7 +302,7 @@ groups
 groups
 0
 10
-10
+2
 1
 1
 NIL
@@ -214,7 +311,7 @@ HORIZONTAL
 SWITCH
 212
 65
-359
+357
 98
 people-network?
 people-network?
@@ -223,15 +320,15 @@ people-network?
 -1000
 
 SLIDER
-213
+212
 26
-360
+358
 59
 links-with-others
 links-with-others
 0
 10
-4
+2
 1
 1
 NIL
@@ -263,10 +360,10 @@ network variables
 1
 
 SWITCH
-27
-307
-198
-340
+24
+228
+189
+261
 show-residual-fear?
 show-residual-fear?
 0
@@ -274,25 +371,25 @@ show-residual-fear?
 -1000
 
 SLIDER
-27
-348
-199
-381
+24
+267
+169
+300
 terror-range
 terror-range
 0
 10
-8
+6
 1
 1
 NIL
 HORIZONTAL
 
 SLIDER
-201
-348
-360
-381
+193
+227
+356
+260
 terror-severity
 terror-severity
 0
@@ -304,10 +401,10 @@ NIL
 HORIZONTAL
 
 SLIDER
-26
-388
-200
-421
+172
+267
+356
+300
 initial-residual-fear
 initial-residual-fear
 0
@@ -327,7 +424,7 @@ network-communication-frequency
 network-communication-frequency
 0
 100
-51
+47
 1
 1
 ticks
@@ -351,10 +448,10 @@ NIL
 1
 
 SLIDER
-26
-428
-212
-461
+24
+339
+206
+372
 residual-decay-rate
 residual-decay-rate
 0
@@ -366,10 +463,10 @@ residual-decay-rate
 HORIZONTAL
 
 SWITCH
-215
-222
-360
-255
+156
+150
+301
+183
 show-fear-index?
 show-fear-index?
 0
@@ -377,20 +474,20 @@ show-fear-index?
 -1000
 
 TEXTBOX
-148
-200
-298
-218
-people variable
+1002
+10
+1152
+28
+people variables
 12
 0.0
 1
 
 PLOT
-806
-26
-1269
-263
+846
+27
+1231
+202
 fear-index of people
 people
 fear-index
@@ -405,32 +502,283 @@ PENS
 "default" 1.0 2 -16777216 false "" ""
 
 PLOT
-808
-267
-1269
-484
+847
+204
+1232
+374
 risk-perception-bias of people
 people
-risk-perception-bias(%)
+risk-perception-bias
 0.0
 100.0
+0.0
 1.0
-200.0
 true
 false
-"set-plot-x-range 0 people-population\nset-plot-y-range 1 200\nset-histogram-num-bars people-population" "clear-plot\nlet the-data [(list who risk-perception-bias)] of turtles\nset-plot-pen-mode 1\nforeach the-data[\nplotxy first ? last ?\n]"
+"set-plot-x-range 0 people-population\nset-plot-y-range 0 1.0\nset-histogram-num-bars people-population" "clear-plot\nlet the-data [(list who risk-perception-bias)] of turtles\nset-plot-pen-mode 1\nforeach the-data[\nplotxy first ? last ?\n]"
 PENS
 "default" 1.0 1 -16777216 true "" ""
 
+TEXTBOX
+130
+208
+280
+226
+terror-event variables
+12
+0.0
+1
+
+TEXTBOX
+58
+320
+208
+338
+government variables
+12
+0.0
+1
+
+TEXTBOX
+230
+320
+380
+338
+media variables\n
+12
+0.0
+1
+
+MONITOR
+850
+554
+941
+599
+Slight fear(%)
+count turtles with [fear-index >= 0 and fear-index < 20]
+17
+1
+11
+
+MONITOR
+944
+554
+1048
+599
+Moderate fear(%)
+count turtles with [fear-index >= 20 and fear-index < 50]
+17
+1
+11
+
+TEXTBOX
+1015
+537
+1165
+555
+Fear scale\n
+12
+0.0
+1
+
+MONITOR
+1050
+554
+1142
+599
+Severe fear(%)
+count turtles with [fear-index >= 50 and fear-index < 70]
+17
+1
+11
+
+MONITOR
+1144
+554
+1239
+599
+Extreme fear(%)
+count turtles with [fear-index >= 70 and fear-index <= 100]
+17
+1
+11
+
+PLOT
+850
+601
+1240
+777
+fear-sacle of people
+ticks
+different fear-scale numbers of people
+0.0
+10.0
+0.0
+100.0
+true
+true
+"" ""
+PENS
+"Slite fear" 1.0 0 -10899396 true "" "plot count turtles with [ fear-index >= 0 and fear-index < 20 ]"
+"Moderate fear" 1.0 0 -13345367 true "" "plot count turtles with [ fear-index >= 20 and fear-index < 50 ]"
+"Server fear" 1.0 0 -955883 true "" "plot count turtles with [ fear-index >= 50 and fear-index < 70 ]"
+"Extreme fear" 1.0 0 -2674135 true "" "plot count turtles with [ fear-index >= 50 and fear-index <= 100 ]"
+
+SWITCH
+212
+447
+307
+480
+media?
+media?
+1
+1
+-1000
+
 SLIDER
-29
-222
-201
-255
-public-effect
-public-effect
+212
+338
+357
+371
+media-frequency
+media-frequency
+2
+10
+2
+1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+24
+374
+206
+407
+government-credibility
+government-credibility
 0
 1
+0.9
+0.1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+212
+374
+357
+407
+media-information-authenticity
+media-information-authenticity
+0
+1.0
+0.8
+0.1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+212
+411
+356
+444
+media-public-influence
+media-public-influence
+0
+1.0
+1
+0.1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+24
+410
+206
+443
+intervation-delay
+intervation-delay
+0
+200
+50
+20
+1
+ticks
+HORIZONTAL
+
+SLIDER
+24
+446
+207
+479
+numbers-of-intervation
+numbers-of-intervation
+0
+people-population
+5
+1
+1
+people
+HORIZONTAL
+
+SLIDER
+25
+482
+207
+515
+level-of-intervation
+level-of-intervation
+0
+100
+3.6
+0.1
+1
+reduction
+HORIZONTAL
+
+SLIDER
+23
+553
+207
+586
+guidance-effort
+guidance-effort
+0
+1.0
+1
+0.1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+22
+588
+208
+621
+intervention-ability-to-media
+intervention-ability-to-media
+0
+1.0
+1
+0.1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+25
+518
+207
+551
+resource-utilization-rate
+resource-utilization-rate
+0
+1.0
 1
 0.1
 1
@@ -783,6 +1131,16 @@ Polygon -7500403 true true 30 75 75 30 270 225 225 270
 NetLogo 5.3.1
 @#$#@#$#@
 @#$#@#$#@
+1.0
+    org.nlogo.sdm.gui.AggregateDrawing 3
+        org.nlogo.sdm.gui.StockFigure "attributes" "attributes" 1 "FillColor" "Color" 225 225 182 127 49 60 40
+            org.nlogo.sdm.gui.WrappedStock "" "" 0
+        org.nlogo.sdm.gui.RateConnection 3 199 91 199 91 199 91 NULL NULL 0 0 0
+            org.jhotdraw.standard.ChopBoxConnector REF 1
+            org.jhotdraw.standard.ChopBoxConnector REF 1
+            org.nlogo.sdm.gui.WrappedRate "" "" REF 2 REF 2 0
+        org.nlogo.sdm.gui.ConverterFigure "attributes" "attributes" 1 "FillColor" "Color" 130 188 183 346 119 50 50
+            org.nlogo.sdm.gui.WrappedConverter "" ""
 @#$#@#$#@
 @#$#@#$#@
 @#$#@#$#@
