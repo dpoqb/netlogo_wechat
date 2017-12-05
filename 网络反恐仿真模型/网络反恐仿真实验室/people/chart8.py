@@ -41,16 +41,18 @@ the_table = plt.table(cellText=cell_text,
                       )
 # 设置字体大小
 the_table.auto_set_font_size(False)
-the_table.set_fontsize(10)
+the_table.set_fontsize(12)
 
 #调整布局：
 plt.subplots_adjust(left=0.2,bottom=0.2)
-plt.ylabel("Distribution of fear range")
+plt.ylabel("Distribution of fear range",fontsize=12)
 plt.grid(linestyle='--')
 # values*value_increment值传入%d
 # plt.yticks([0,20,40,60,80,100])
 plt.xticks([])
-plt.title("Different levels of intervention vs. Fear range")
+plt.title("Different levels of intervention vs. Fear range",fontsize=14)
+plt.xticks(fontsize=11)
+plt.yticks(fontsize=11)
 plt.show()
 
 

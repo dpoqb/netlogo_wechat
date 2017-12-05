@@ -72,35 +72,44 @@ fig = plt.figure()
 ax = fig.add_subplot(2,2,1)
 # 修改刻度
 ax.set_yticks([0.0,0.2,0.4,0.6,0.8,1.0])
+plt.yticks(fontsize=11)
+plt.xticks(fontsize=11)
 plt.scatter(people,person_information_authenticity, marker = 'o',label = 'Initial')
 plt.scatter(people1,person_information_authenticity_1, marker = 'o',label = 'Result')
-plt.title("person-information-authenticity of people")
-plt.xlabel('people')
-plt.ylabel('person-information-authenticity')
-plt.legend(loc = 'upper right')
+x1="people"+"\n"+"(a)"
+plt.title("Person information authenticity of people",fontsize=14)
+plt.xlabel(x1,fontsize=12)
+plt.ylabel('Person information authenticity',fontsize=12)
+plt.legend(loc = 'upper right',fontsize=11)
 plt.axhline(0.6,linestyle='--',label = "1",color = 'black')
 
 #网民认知偏差
 ax = fig.add_subplot(2,2,2)
 # 修改刻度
 ax.set_yticks([0.0,0.2,0.4,0.6,0.7,0.8,1.0])
+plt.yticks(fontsize=11)
+plt.xticks(fontsize=11)
 plt.scatter(people,end_risk_perception_bias, marker = 'o',label = 'Initial')
 plt.scatter(people1,end_risk_perception_bias_1, marker = 'o',label = 'Result')
-plt.title("end-risk-perception-bias of people")
-plt.xlabel('people')
-plt.ylabel('risk-perception-bias')
-plt.legend(loc = 'upper right')
+x2="people"+"\n"+"(b)"
+plt.title("End risk perception bias of people",fontsize=14)
+plt.xlabel(x2,fontsize=12)
+plt.ylabel('Risk perception bias',fontsize=12)
+plt.legend(loc = 'upper right',fontsize=11)
 plt.axhline(0.7,linestyle='--',label = "1",color = 'black')
 
 #网民恐惧指数初始与结果
 ax = fig.add_subplot(2,1,2)
 ax.set_yticks([0,20,40,50,60,80,100])
+plt.yticks(fontsize=11)
+plt.xticks(fontsize=11)
 plt.scatter(people,fear_index, marker = 'o',label = 'Initial')
 plt.scatter(people1,fear_index1, marker = 'o',label = 'Result')
-plt.title("terrorist-network fear-index of people")
-plt.xlabel('people')
-plt.ylabel('fear-index')
-plt.legend(loc = 'upper right')
+x3="people"+"\n"+"(c)"
+plt.title("Fear index of people",fontsize=14)
+plt.xlabel(x3,fontsize=12)
+plt.ylabel('fear index',fontsize=12)
+plt.legend(loc = 'upper right',fontsize=11)
 # 作辅助线
 plt.axhline(50,linestyle='--',label = "1",color = 'black')
 

@@ -2,7 +2,7 @@ from people.FileRead import FileRead_fmg
 import matplotlib.pyplot as plt
 
 # 寻找test9-Id下的.csv文件
-file_dir='/home/songwei/桌面/网络反恐仿真实验室/people/test9-Id'
+file_dir="/var/www/html/GitHub/repository/网络反恐Netlogo仿真模型/网络反恐仿真模型/网络反恐仿真实验室/people/test9-Id"
 find_str_1 = "\"average fear index\""
 find_str_2 = "\"person public influence\""
 find_str_3 = "\"fear-sacle of people\""
@@ -22,10 +22,12 @@ fig = plt.figure()
 ax1 = fig.add_subplot(1,1,1)
 ax1.grid(linestyle='--')
 ax1.set_xticks(Id)
-ax1.set_ylabel("Stable time")
-ax1.set_xlabel("Intervation delay")
-ax1.set_title("Stable time vs.Intervation delay")
+plt.xticks(fontsize=11)
+plt.yticks(fontsize=11)
+ax1.set_ylabel("Stable time",fontsize=12)
+ax1.set_xlabel("Intervation delay",fontsize=12)
+ax1.set_title("Stable time vs.Intervation delay",fontsize=14)
 ax1.plot(_avg_fear_index_vs_Id.var,[2630, 2885, 3596, 4304, 4920],'o-',label='time')
 ax1.plot([20,200],[2630,4920],'--')
-ax1.legend(loc='2')
+ax1.legend(loc='2',fontsize=11)
 plt.show()

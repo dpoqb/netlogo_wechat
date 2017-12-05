@@ -18,7 +18,10 @@ globals [
   mouse-was-down?   ;;tracks the previous state of the mouse
   terror-event?     ;;tracks whether a terror event has occurred recently, true after a terror event until government intervention occur
   help-timer        ;;keeps track of time until government intervention occurs
+<<<<<<< HEAD
   system-time
+=======
+>>>>>>> master
 ]
 
 ;;the patches can represent media ,the label of patches can describe terror event
@@ -110,7 +113,11 @@ to go
   [
    if terror-event? = true
     [
+<<<<<<< HEAD
       if ticks >= 20000 [ set terror-event? false ]
+=======
+      if ticks >= 1000 [ set terror-event? false ]
+>>>>>>> master
       ;;The number of interventions is [0, people-population],
       ;; but the number of actual interventions is determined by resource utilization
       ask n-of round (numbers-of-intervation * resource-utilization-rate) people
@@ -118,7 +125,11 @@ to go
         let fear-change (fear-index - round((level-of-intervation * resource-utilization-rate * fear-index * government-credibility) / 10))
         ifelse fear-change < 0 [set fear-index 0]
         [set fear-index fear-change]
+<<<<<<< HEAD
       ]
+=======
+        ]
+>>>>>>> master
       ;;Indirectly intervene Internet users through media
       ask n-of round(guidance-effort * (4 * max-pxcor * max-pycor)) patches
       [
@@ -240,6 +251,7 @@ end
 to adjust-fear-index-between-media-people [watcher]
   if watcher != nobody
   [
+<<<<<<< HEAD
     let difference-between-media-and-people round (media-fear-index - ([fear-index] of watcher) *
       media-information-authenticity * media-public-influence) / 20
     let difference-between-people-and-media round ([fear-index] of watcher - media-fear-index)
@@ -261,6 +273,19 @@ to adjust-fear-index-between-media-people [watcher]
         [set media-fear-index 100]
         [set media-fear-index media-fear-change]
         ]
+=======
+    let difference-between-media-people round (media-fear-index - ([fear-index] of watcher) *
+      media-information-authenticity * media-public-influence) / 20
+    let fear-change (precision ([fear-index] of watcher + difference-between-media-people) 2)
+    if terror-event? = true[
+      ifelse fear-change < 0
+      [ ask watcher [set fear-index 0 ]]
+      [
+        ifelse fear-change > 100
+        [ ask watcher [set fear-index 100] ]
+        [ ask watcher [set fear-index fear-change] ]
+      ]
+>>>>>>> master
       ]
   ]
 end
@@ -313,8 +338,12 @@ end
 ;; when media? is true, patches run this procedure, representing TV-watching.
 ;; assume that a turtle will accept a trend regardless of category with media exposure
 to media-trend
+<<<<<<< HEAD
   set pcolor yellow
   ;; the turtle watches TV
+=======
+  set pcolor yellow ;; the turtle watches TV
+>>>>>>> master
   ;; the media will try to influence one of the turtles on the TV patch
   let watcher one-of turtles-here
   if watcher != nobody [
@@ -454,7 +483,11 @@ terror-range
 terror-range
 0
 10
+<<<<<<< HEAD
 5
+=======
+0
+>>>>>>> master
 1
 1
 NIL
@@ -469,7 +502,11 @@ terror-severity
 terror-severity
 0
 100
+<<<<<<< HEAD
 100
+=======
+0
+>>>>>>> master
 1
 1
 NIL
@@ -499,7 +536,11 @@ network-communication-frequency
 network-communication-frequency
 0
 100
+<<<<<<< HEAD
 20
+=======
+50
+>>>>>>> master
 1
 1
 ticks
@@ -531,7 +572,11 @@ residual-decay-rate
 residual-decay-rate
 0
 100
+<<<<<<< HEAD
 2
+=======
+0
+>>>>>>> master
 1
 1
 /tick
@@ -559,10 +604,17 @@ people variables
 1
 
 PLOT
+<<<<<<< HEAD
 798
 25
 1185
 201
+=======
+799
+25
+1184
+200
+>>>>>>> master
 fear-index of people
 people
 fear-index
@@ -577,10 +629,17 @@ PENS
 "default" 1.0 2 -16777216 false "" ""
 
 PLOT
+<<<<<<< HEAD
 799
 202
 1186
 374
+=======
+800
+202
+1185
+372
+>>>>>>> master
 risk-perception-bias of people
 people
 risk-perception-bias
@@ -669,8 +728,13 @@ count turtles with [fear-index >= 70 and fear-index <= 100]
 11
 
 PLOT
+<<<<<<< HEAD
 361
 530
+=======
+362
+529
+>>>>>>> master
 793
 740
 fear-sacle of people
@@ -690,10 +754,17 @@ PENS
 "Extreme fear" 1.0 0 -2674135 true "" "plot count turtles with [ fear-index >= 70 and fear-index <= 100 ]"
 
 SWITCH
+<<<<<<< HEAD
 212
 482
 302
 515
+=======
+211
+483
+301
+516
+>>>>>>> master
 media?
 media?
 0
@@ -724,7 +795,11 @@ government-credibility
 government-credibility
 0
 1
+<<<<<<< HEAD
 1
+=======
+0
+>>>>>>> master
 0.01
 1
 NIL
@@ -739,7 +814,11 @@ media-information-authenticity
 media-information-authenticity
 0
 1.0
+<<<<<<< HEAD
 1
+=======
+0
+>>>>>>> master
 0.01
 1
 NIL
@@ -754,7 +833,11 @@ media-public-influence
 media-public-influence
 0
 1
+<<<<<<< HEAD
 1
+=======
+0
+>>>>>>> master
 0.01
 1
 NIL
@@ -769,7 +852,11 @@ intervation-delay
 intervation-delay
 0
 200
+<<<<<<< HEAD
 20
+=======
+0
+>>>>>>> master
 20
 1
 ticks
@@ -784,7 +871,11 @@ numbers-of-intervation
 numbers-of-intervation
 0
 people-population
+<<<<<<< HEAD
 10
+=======
+0
+>>>>>>> master
 1
 1
 people
@@ -799,7 +890,11 @@ level-of-intervation
 level-of-intervation
 0
 1.0
+<<<<<<< HEAD
 0.5
+=======
+0
+>>>>>>> master
 0.01
 1
 reduction
@@ -844,13 +939,53 @@ resource-utilization-rate
 resource-utilization-rate
 0
 1.00
+<<<<<<< HEAD
 0.1
+0.01
+=======
+0
 0.01
 1
 NIL
 HORIZONTAL
 
 PLOT
+800
+742
+1187
+926
+average fear index
+ticks
+average fear index
+0.0
+10.0
+0.0
+10.0
+true
+true
+"" ""
+PENS
+"media" 1.0 0 -16448764 true "" "plot mean [media-fear-index] of patches"
+"people" 1.0 0 -2674135 true "" "plot mean [fear-index] of people"
+
+SLIDER
+211
+446
+356
+479
+media-numbers
+media-numbers
+0
+10
+0
+1
+>>>>>>> master
+1
+NIL
+HORIZONTAL
+
+PLOT
+<<<<<<< HEAD
 361
 742
 793
@@ -885,6 +1020,8 @@ NIL
 HORIZONTAL
 
 PLOT
+=======
+>>>>>>> master
 800
 374
 1186
@@ -900,6 +1037,7 @@ true
 false
 "set-plot-x-range 0 people-population\nset-plot-y-range 0 1.00\nset-histogram-num-bars people-population" "clear-plot\nlet the-data [(list who person-public-influence)] of turtles\nset-plot-pen-mode 1\nforeach the-data[\nplotxy first ? last ?\n]"
 PENS
+<<<<<<< HEAD
 "default" 1.0 1 -16777216 true "" ""
 
 PLOT
@@ -907,6 +1045,15 @@ PLOT
 744
 1186
 926
+=======
+"default" 1.0 0 -16777216 true "" ""
+
+PLOT
+800
+558
+1187
+740
+>>>>>>> master
 different fear-index numbers of people
 fear index
 numbers of people
@@ -920,6 +1067,7 @@ false
 PENS
 "default" 1.0 1 -16777216 true "" "histogram [round fear-index] of turtles"
 
+<<<<<<< HEAD
 PLOT
 800
 559
@@ -959,6 +1107,8 @@ TEXTBOX
 0.0
 1
 
+=======
+>>>>>>> master
 @#$#@#$#@
 ## WHAT IS IT?
 
